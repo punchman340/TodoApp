@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TODO 앱</title>
+    <title>TODO App</title>
     <style>
         * {
             margin: 0;
@@ -195,8 +195,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📝 TODO 앱</h1>
-        <p>할 일을 관리하세요</p>
+        <h1>📝 TODO App</h1>
+        <p>Manage your daily tasks efficiently</p>
     </div>
 
     <div class="input-section">
@@ -204,90 +204,76 @@
             <input
                     type="text"
                     id="titleInput"
-                    placeholder="할 일 제목 (필수)"
+                    placeholder="Task Title (Required)"
                     maxlength="255"
             >
         </div>
         <div class="input-group">
                 <textarea
                         id="descriptionInput"
-                        placeholder="설명 (선택)"
+                        placeholder="Description (Optional)"
                 ></textarea>
         </div>
         <div class="input-group">
-            <button onclick="createTodo()">➕ 추가하기</button>
+            <button onclick="createTodo()">➕ Add Task</button>
         </div>
 
         <div class="filter-buttons">
             <button class="filter-btn active" onclick="filterTodos('all')">
-                전체
+                All
             </button>
             <button class="filter-btn" onclick="filterTodos('active')">
-                진행 중
+                Active
             </button>
             <button class="filter-btn" onclick="filterTodos('completed')">
-                완료됨
+                Completed
             </button>
         </div>
     </div>
 
     <div class="todo-list" id="todoList">
-        <div class="empty-message">할 일을 추가해주세요</div>
+        <div class="empty-message">Add your first task!</div>
     </div>
 </div>
 
 <script>
-    // API 기본 URL
     const API_URL = 'http://localhost:8080/api/todos';
-
-    // 현재 필터 상태
     let currentFilter = 'all';
 
-    // 페이지 로드 시 TODO 목록 불러오기
     window.onload = function() {
         loadTodos();
     };
 
-    /**
-     * TODO 목록 불러오기
-     */
     async function loadTodos() {
         try {
             let url = API_URL;
 
-            // 필터에 따라 URL 변경
             if (currentFilter === 'active') {
                 url += '?completed=false';
             } else if (currentFilter === 'completed') {
                 url += '?completed=true';
             }
 
-            // API 호출
             const response = await fetch(url);
 
             if (!response.ok) {
-                throw new Error('목록 불러오기 실패');
+                throw new Error('Failed to fetch todos');
             }
 
             const todos = await response.json();
-
-            // 화면에 표시
             displayTodos(todos);
 
         } catch (error) {
-            console.error('에러:', error);
-            alert('TODO 목록을 불러오는데 실패했습니다.');
+            console.error('Error:', error);
+            alert('Failed to load TODO list.');
         }
     }
 
-    /**
-     * TODO 목록 화면에 표시
-     */
     function displayTodos(todos) {
         const todoList = document.getElementById('todoList');
 
         if (todos.length === 0) {
-            todoList.innerHTML = '<div class="empty-message">할 일이 없습니다</div>';
+            todoList.innerHTML = '<div class="empty-message">No tasks found</div>';
             return;
         }
 
@@ -296,34 +282,31 @@
                     <div class="todo-content">
                         <div class="todo-title">${escapeHtml(todo.title)}</div>
                         <div class="todo-description">${escapeHtml(todo.description || '')}</div>
-                        <div class="todo-date">생성: ${formatDate(todo.createdAt)}</div>
+                        <div class="todo-date">Created: ${formatDate(todo.createdAt)}</div>
                     </div>
                     <div class="todo-actions">
                         <button class="btn-small btn-toggle" onclick="toggleTodo(${todo.id})">
-                            ${todo.completed ? '↩️ 미완료' : '✅ 완료'}
+                            ${todo.completed ? '↩️ Undo' : '✅ Done'}
                         </button>
                         <button class="btn-small btn-delete" onclick="deleteTodo(${todo.id})">
-                            🗑️ 삭제
+                            🗑️ Delete
                         </button>
                     </div>
                 </div>
             `).join('');
     }
 
-    /**
-     * TODO 생성
-     */
     async function createTodo() {
         const title = document.getElementById('titleInput').value.trim();
         const description = document.getElementById('descriptionInput').value.trim();
 
         if (!title) {
-            alert('제목을 입력하세요!');
+            alert('Please enter a title!');
             return;
         }
 
         if (title.length > 255) {
-            alert('제목은 255자를 초과할 수 없습니다!');
+            alert('Title cannot exceed 255 characters!');
             return;
         }
 
@@ -341,25 +324,20 @@
             });
 
             if (!response.ok) {
-                throw new Error('생성 실패');
+                throw new Error('Creation failed');
             }
 
-            // 입력 필드 초기화
             document.getElementById('titleInput').value = '';
             document.getElementById('descriptionInput').value = '';
 
-            // 목록 새로고침
             loadTodos();
 
         } catch (error) {
-            console.error('에러:', error);
-            alert('TODO 생성에 실패했습니다.');
+            console.error('Error:', error);
+            alert('Failed to create TODO.');
         }
     }
 
-    /**
-     * TODO 완료/미완료 토글
-     */
     async function toggleTodo(id) {
         try {
             const response = await fetch(`${API_URL}/${id}/toggle`, {
@@ -367,23 +345,19 @@
             });
 
             if (!response.ok) {
-                throw new Error('토글 실패');
+                throw new Error('Toggle failed');
             }
 
-            // 목록 새로고침
             loadTodos();
 
         } catch (error) {
-            console.error('에러:', error);
-            alert('상태 변경에 실패했습니다.');
+            console.error('Error:', error);
+            alert('Failed to update status.');
         }
     }
 
-    /**
-     * TODO 삭제
-     */
     async function deleteTodo(id) {
-        if (!confirm('정말 삭제하시겠습니까?')) {
+        if (!confirm('Are you sure you want to delete this task?')) {
             return;
         }
 
@@ -393,51 +367,43 @@
             });
 
             if (!response.ok) {
-                throw new Error('삭제 실패');
+                throw new Error('Delete failed');
             }
 
-            // 목록 새로고침
             loadTodos();
 
         } catch (error) {
-            console.error('에러:', error);
-            alert('삭제에 실패했습니다.');
+            console.error('Error:', error);
+            alert('Failed to delete task.');
         }
     }
 
-    /**
-     * 필터 변경
-     */
     function filterTodos(filter) {
         currentFilter = filter;
 
-        // 버튼 스타일 변경
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        event.target.classList.add('active');
 
-        // 목록 새로고침
+        // Handling event context for filtering
+        if (event) {
+            event.target.classList.add('active');
+        }
+
         loadTodos();
     }
 
-    /**
-     * 날짜 포맷팅
-     */
     function formatDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleString('ko-KR', {
+        return date.toLocaleString('en-US', {
             year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
+            month: 'short',
+            day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         });
     }
 
-    /**
-     * HTML 이스케이프 (XSS 방지)
-     */
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -445,9 +411,6 @@
         return div.innerHTML;
     }
 
-    /**
-     * Enter 키로 추가
-     */
     document.getElementById('titleInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             createTodo();
