@@ -17,30 +17,32 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 50)
-    private String username;
+    private String username;  // 아이디 (중복 불가)
 
     @Column(nullable = false)
-    private String password;
+    private String password;  // 비밀번호 (암호화 저장)
 
     @Column(nullable = false, unique = true, length = 100)
-    private String email;
+    private String email;  // 이메일 (중복 불가)
 
     @Column(length = 50)
-    private String nickname;
+    private String nickname;  // 닉네임
 
     @CreationTimestamp
-    @Column(name = "create_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // User : Todo = 1 : N 관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Todo> todos = new ArrayList<>();

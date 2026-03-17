@@ -1,17 +1,16 @@
 package com.example.todoapp.service;
 
-
-import com.example.todoapp.dto.LoginRequest;
-import com.example.todoapp.dto.LoginResponse;
-import com.example.todoapp.dto.SignupRequest;
-import com.example.todoapp.dto.UserResponse;
+import com.example.todoapp.dto.request.LoginRequest;
+import com.example.todoapp.dto.request.SignupRequest;
+import com.example.todoapp.dto.response.LoginResponse;
+import com.example.todoapp.dto.response.UserResponse;
 import com.example.todoapp.entity.User;
 import com.example.todoapp.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

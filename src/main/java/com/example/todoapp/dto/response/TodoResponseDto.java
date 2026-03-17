@@ -1,4 +1,4 @@
-package com.example.todoapp.dto;
+package com.example.todoapp.dto.response;
 
 import com.example.todoapp.entity.Todo;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -28,7 +28,6 @@ public class TodoResponseDto {
         return TodoResponseDto.builder()
                 .id(todo.getId())
                 .title(todo.getTitle())
-                .description(todo.getDescription())
                 .completed(todo.getCompleted())
                 .createdAt(todo.getCreatedAt())
                 .updatedAt(todo.getUpdatedAt())

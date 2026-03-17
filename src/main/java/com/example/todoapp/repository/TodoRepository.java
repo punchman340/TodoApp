@@ -2,30 +2,17 @@ package com.example.todoapp.repository;
 
 import com.example.todoapp.entity.Todo;
 import com.example.todoapp.entity.User;
-import org.hibernate.boot.BootLogging_$logger;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
-// Data access layer
-// JPA provides standard CRUD operations
 @Repository
-public interface TodoRepository extends JpaRepository<Todo, Long>{
-    // Find todos by completion status
-    List<Todo> findByCompletedOrderByCreatedAtDesc(Boolean completed);
-    // Find todos containing a specific keyword
-    List<Todo> findByCompletedContaining(String keyword);
-    // Search for condition including completion, title keyword
-    List<Todo> findByCompletedAndTitleContaining(Boolean completed, String keyword);
-    // Retrieve todos created after specific time
-    List<Todo> findByCreatedAtAfter(LocalDateTime date);
+public interface TodoRepository extends JpaRepository<Todo, Long> {
+
+    // 🆕 추가: 특정 사용자의 할일 조회
     List<Todo> findByUserOrderByCreatedAtDesc(User user);
-    // Return the total count of todos filtered by completion
-    long countByCompleted(Boolean completed);
-    // Search for keyword in title or description
-    @Query("SELECT t FROM Todo t WHERE t.title LIKE %:keyword% OR t.description LIKE %:keyword%")
-    List<Todo> searchByKeyword(@Param("keyword") String keyword);
+
+    // 기존 메서드들은 그대로 유지 가능 (사용 안 해도 됨)
+    List<Todo> findByCompletedOrderByCreatedAtDesc(Boolean completed);
 }

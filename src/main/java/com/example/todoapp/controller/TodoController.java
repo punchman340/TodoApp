@@ -1,8 +1,9 @@
 package com.example.todoapp.controller;
 
-import com.example.todoapp.dto.TodoRequestDto;
-import com.example.todoapp.dto.TodoResponseDto;
+import com.example.todoapp.dto.request.TodoRequestDto;
+import com.example.todoapp.dto.response.TodoResponseDto;
 import com.example.todoapp.service.TodoService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,98 +13,102 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-//Todo Controller
-@RestController     //Combines @Controller and @ResponseBody
-@RequestMapping("/api/todos")   //Base path for all endpoints in controller
+@RestController
+@RequestMapping("/api/todos")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*") //Enables CORS for frontend integration
+@CrossOrigin(origins = "*")
 public class TodoController {
 
     private final TodoService todoService;
 
-    //Retrieve all todos or Filter by status
-    //GET /api/todos?completed=true
-    @GetMapping
-    public ResponseEntity<List<TodoResponseDto>> getAllTodos(
-            @RequestParam(required = false) Boolean completed)   //Optional query parameter for filtering
-    {
-        log.info("Request: Get all todos (Filtered by completed: {})", completed);
-
-        List<TodoResponseDto> todos;
-        if (completed != null) {
-            todos = todoService.getTodoByCompleted(completed);
-        } else {
-            todos = todoService.getAllTodos();
+    /**
+     * 🔑 로그인 체크 헬퍼 메서드
+     */
+    private Long getLoginUserId(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다");
         }
-
-        return ResponseEntity.ok(todos);
+        return userId;
     }
 
-    //Retrieve a single Todo by ID
-    //GET /api/todos/{id}
-    @GetMapping("/{id}")
-    public ResponseEntity<TodoResponseDto> getTodoById(@PathVariable Long id)
-    {
-        log.info("Request: Get todo by ID ({})", id);
-        TodoResponseDto todo = todoService.getTodoById(id);
-        return ResponseEntity.ok(todo);
+    /**
+     * 🆕 수정: 내 할일 목록 조회
+     */
+    @GetMapping
+    public ResponseEntity<List<TodoResponseDto>> getAllTodos(HttpSession session) {
+        try {
+            Long userId = getLoginUserId(session);
+            List<TodoResponseDto> todos = todoService.getAllTodos(userId);
+            return ResponseEntity.ok(todos);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    //Create a new Todo
-    //POST /api/todos
+    /**
+     * 🆕 수정: 할일 생성
+     */
     @PostMapping
     public ResponseEntity<TodoResponseDto> createTodo(
-            //@Valid: Triggers DTO validation (@NotBlank, @Size)
-            //@RequestBody: Deserializes incoming JSON into a DTO object
-            @Valid @RequestBody TodoRequestDto requestDto)
-    {
-        log.info("Request: Create todo with title: {}", requestDto.getTitle());
-        TodoResponseDto createdTodo = todoService.createTodo(id, requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTodo);
+            @Valid @RequestBody TodoRequestDto requestDto,
+            HttpSession session) {
+        try {
+            Long userId = getLoginUserId(session);
+            TodoResponseDto response = todoService.createTodo(userId, requestDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    //Update an existing Todo
-    //PUT /api/todos/{id}
+    /**
+     * 🆕 수정: 할일 수정
+     */
     @PutMapping("/{id}")
     public ResponseEntity<TodoResponseDto> updateTodo(
             @PathVariable Long id,
-            @Valid @RequestBody TodoRequestDto requestDto)
-    {
-        log.info("Request: Update todo ID: {}", id);
-        TodoResponseDto updatedTodo = todoService.updateTodo(id, id,requestDto);
-        return ResponseEntity.ok(updatedTodo);
+            @Valid @RequestBody TodoRequestDto requestDto,
+            HttpSession session) {
+        try {
+            Long userId = getLoginUserId(session);
+            TodoResponseDto response = todoService.updateTodo(userId, id, requestDto);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    //Toggle the completion status of a Todo
-    //PATCH /api/todos/{id}/toggle
-    //PATCH is used for partial updates
+    /**
+     * 🆕 수정: 완료 토글
+     */
     @PatchMapping("/{id}/toggle")
-    public ResponseEntity<TodoResponseDto> toggleTodoCompleted(@PathVariable Long id)
-    {
-        log.info("Request: Toggle status for ID: {}", id);
-        TodoResponseDto todo = todoService.toggleTodoCompleted(id, id);
-        return ResponseEntity.ok(todo);
+    public ResponseEntity<TodoResponseDto> toggleComplete(
+            @PathVariable Long id,
+            HttpSession session) {
+        try {
+            Long userId = getLoginUserId(session);
+            TodoResponseDto response = todoService.toggleComplete(userId, id);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    //Delete a Todo by ID
-    //DELETE /api/todos/{id}
+    /**
+     * 🆕 수정: 할일 삭제
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTodo(@PathVariable Long id)
-    {
-        log.info("Request: Delete todo ID: {}", id);
-        todoService.deleteTodo(id, id);
-        return ResponseEntity.noContent().build();
-    }
-
-    //Search Todos by keyword in title or description
-    //GET /api/todos/search?keyword=...
-    @GetMapping("/search")
-    public ResponseEntity<List<TodoResponseDto>> searchTodos(
-            @RequestParam String keyword)
-    {
-        log.info("Request: Search todos with keyword: {}", keyword);
-        List<TodoResponseDto> todos = todoService.searchTodos(userId, keyword);
-        return ResponseEntity.ok(todos);
+    public ResponseEntity<Void> deleteTodo(
+            @PathVariable Long id,
+            HttpSession session) {
+        try {
+            Long userId = getLoginUserId(session);
+            todoService.deleteTodo(userId, id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 }

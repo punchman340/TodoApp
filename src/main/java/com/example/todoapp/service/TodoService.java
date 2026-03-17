@@ -1,7 +1,7 @@
 package com.example.todoapp.service;
 
-import com.example.todoapp.dto.TodoRequestDto;
-import com.example.todoapp.dto.TodoResponseDto;
+import com.example.todoapp.dto.request.TodoRequestDto;
+import com.example.todoapp.dto.response.TodoResponseDto;
 import com.example.todoapp.entity.Todo;
 import com.example.todoapp.entity.User;
 import com.example.todoapp.repository.TodoRepository;
@@ -88,7 +88,7 @@ public class TodoService {
      * 🆕 수정: 완료 토글 (본인 할일만)
      */
     @Transactional
-    public TodoResponseDto toggleTodoCompleted(Long userId, Long todoId) {
+    public TodoResponseDto toggleComplete(Long userId, Long todoId) {
         log.info("사용자 {}의 할일 {} 완료 토글", userId, todoId);
 
         Todo todo = todoRepository.findById(todoId)
@@ -120,15 +120,5 @@ public class TodoService {
         }
 
         todoRepository.delete(todo);
-    }
-
-    @Transactional(readOnly = true)
-    public List<TodoResponseDto> searchTodos(Long userId, String keyword) {
-        log.info("사용자 {}의 할일 키워드 검색: {}", userId, keyword);
-        List<Todo> searchResults = todoRepository.searchByKeyword(keyword);
-        return searchResults.stream()
-                .filter(todo -> todo.getUser().getId().equals(userId))
-                .map(TodoResponseDto::fromEntity)
-                .collect(Collectors.toList());
     }
 }
