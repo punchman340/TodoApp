@@ -1,6 +1,7 @@
 package com.example.todoapp.repository;
 
 import com.example.todoapp.entity.Todo;
+import com.example.todoapp.entity.User;
 import org.hibernate.boot.BootLogging_$logger;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,7 @@ public interface TodoRepository extends JpaRepository<Todo, Long>{
     List<Todo> findByCompletedAndTitleContaining(Boolean completed, String keyword);
     // Retrieve todos created after specific time
     List<Todo> findByCreatedAtAfter(LocalDateTime date);
+    List<Todo> findByUserOrderByCreatedAtDesc(User user);
     // Return the total count of todos filtered by completion
     long countByCompleted(Boolean completed);
     // Search for keyword in title or description

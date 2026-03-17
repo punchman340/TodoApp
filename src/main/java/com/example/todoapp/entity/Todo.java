@@ -1,10 +1,7 @@
 package com.example.todoapp.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
@@ -18,6 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Todo {
     // PK
     @Id
@@ -41,6 +39,7 @@ public class Todo {
     // Todo Completed or NOT
     // Column Type: Boolean
     @Column(nullable = false)
+    @Builder.Default
     private Boolean completed = false;  // 기본값 설정
 
 
@@ -57,4 +56,8 @@ public class Todo {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY) // ManyToMany를 ManyToOne으로 변경
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }

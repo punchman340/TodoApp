@@ -59,7 +59,7 @@ public class TodoController {
             @Valid @RequestBody TodoRequestDto requestDto)
     {
         log.info("Request: Create todo with title: {}", requestDto.getTitle());
-        TodoResponseDto createdTodo = todoService.createTodo(requestDto);
+        TodoResponseDto createdTodo = todoService.createTodo(id, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTodo);
     }
 
@@ -71,7 +71,7 @@ public class TodoController {
             @Valid @RequestBody TodoRequestDto requestDto)
     {
         log.info("Request: Update todo ID: {}", id);
-        TodoResponseDto updatedTodo = todoService.updateTodo(id, requestDto);
+        TodoResponseDto updatedTodo = todoService.updateTodo(id, id,requestDto);
         return ResponseEntity.ok(updatedTodo);
     }
 
@@ -82,7 +82,7 @@ public class TodoController {
     public ResponseEntity<TodoResponseDto> toggleTodoCompleted(@PathVariable Long id)
     {
         log.info("Request: Toggle status for ID: {}", id);
-        TodoResponseDto todo = todoService.toggleTodoCompleted(id);
+        TodoResponseDto todo = todoService.toggleTodoCompleted(id, id);
         return ResponseEntity.ok(todo);
     }
 
@@ -92,7 +92,7 @@ public class TodoController {
     public ResponseEntity<Void> deleteTodo(@PathVariable Long id)
     {
         log.info("Request: Delete todo ID: {}", id);
-        todoService.deleteTodo(id);
+        todoService.deleteTodo(id, id);
         return ResponseEntity.noContent().build();
     }
 
@@ -103,7 +103,7 @@ public class TodoController {
             @RequestParam String keyword)
     {
         log.info("Request: Search todos with keyword: {}", keyword);
-        List<TodoResponseDto> todos = todoService.searchTodos(keyword);
+        List<TodoResponseDto> todos = todoService.searchTodos(userId, keyword);
         return ResponseEntity.ok(todos);
     }
 }

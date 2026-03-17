@@ -1,83 +1,133 @@
 package com.example.todoapp.service;
 
-import com.example.todoapp.dto.TodoResponseDto;
 import com.example.todoapp.dto.TodoRequestDto;
+import com.example.todoapp.dto.TodoResponseDto;
 import com.example.todoapp.entity.Todo;
+import com.example.todoapp.entity.User;
 import com.example.todoapp.repository.TodoRepository;
+import com.example.todoapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
-// Service layer for business logic
-@Service @RequiredArgsConstructor
-@Slf4j  // Enable logging
-@Transactional(readOnly = true)
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class TodoService {
+
     private final TodoRepository todoRepository;
-    // Retrieve all todos and convert them to ResponseDTO
-    public List<TodoResponseDto> getAllTodos() {
-        return todoRepository.findAll().stream()
+    private final UserRepository userRepository;  // 🆕 추가
+
+    /**
+     * 🆕 수정: 특정 사용자의 모든 할일 조회
+     */
+    @Transactional(readOnly = true)
+    public List<TodoResponseDto> getAllTodos(Long userId) {
+        log.info("사용자 {}의 할일 목록 조회", userId);
+
+        // User 찾기
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // 해당 사용자의 할일만 조회
+        List<Todo> todos = todoRepository.findByUserOrderByCreatedAtDesc(user);
+
+        return todos.stream()
                 .map(TodoResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
-    // Fetch todos by completion status and convert to DTO
-    public List<TodoResponseDto> getTodoByCompleted(Boolean completed) {
-        return todoRepository.findByCompletedOrderByCreatedAtDesc(completed).stream()
-                .map(TodoResponseDto::fromEntity)
-                .collect(Collectors.toList());
-    }
-    // Find a single todo by ID (throws exception)
-    public TodoResponseDto getTodoById(Long id) {
-        Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("할 일을 찾을 수 없습니다. ID: " + id));
-        return TodoResponseDto.fromEntity(todo);
-    }
-    // Create a new todo (Transcation required!)
+
+    /**
+     * 🆕 수정: 할일 생성 (사용자 연결)
+     */
     @Transactional
-    public TodoResponseDto createTodo(TodoRequestDto requestDto) {
-        Todo todo = new Todo();
-        todo.setTitle(requestDto.getTitle());
-        todo.setDescription(requestDto.getDescription());
-        todo.setCompleted(requestDto.getCompleted() != null ? requestDto.getCompleted() : false);
+    public TodoResponseDto createTodo(Long userId, TodoRequestDto requestDto) {
+        log.info("사용자 {}의 할일 생성: {}", userId, requestDto.getTitle());
+
+        // User 찾기
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // Todo 생성
+        Todo todo = Todo.builder()
+                .title(requestDto.getTitle())
+                .completed(false)
+                .user(user)  // 🆕 사용자 연결
+                .build();
+
         Todo savedTodo = todoRepository.save(todo);
+
         return TodoResponseDto.fromEntity(savedTodo);
     }
-    // Update an existing todo
+
+    /**
+     * 🆕 수정: 할일 수정 (본인 할일만)
+     */
     @Transactional
-    public TodoResponseDto updateTodo(Long id, TodoRequestDto requestDto) {
-        Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("할 일을 찾을 수 없습니다. ID: " + id));
+    public TodoResponseDto updateTodo(Long userId, Long todoId, TodoRequestDto requestDto) {
+        log.info("사용자 {}의 할일 {} 수정", userId, todoId);
+
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new IllegalArgumentException("할일을 찾을 수 없습니다"));
+
+        // 🆕 본인 할일인지 확인
+        if (!todo.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("다른 사용자의 할일은 수정할 수 없습니다");
+        }
 
         todo.setTitle(requestDto.getTitle());
-        todo.setDescription(requestDto.getDescription());
-        if (requestDto.getCompleted() != null) {
-            todo.setCompleted(requestDto.getCompleted());
-        }
 
         return TodoResponseDto.fromEntity(todo);
     }
-    // Toggle the completion todo status
+
+    /**
+     * 🆕 수정: 완료 토글 (본인 할일만)
+     */
     @Transactional
-    public TodoResponseDto toggleTodoCompleted(Long id) {
-        Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("할 일을 찾을 수 없습니다. ID: " + id));
+    public TodoResponseDto toggleTodoCompleted(Long userId, Long todoId) {
+        log.info("사용자 {}의 할일 {} 완료 토글", userId, todoId);
+
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new IllegalArgumentException("할일을 찾을 수 없습니다"));
+
+        // 🆕 본인 할일인지 확인
+        if (!todo.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("다른 사용자의 할일은 수정할 수 없습니다");
+        }
+
         todo.setCompleted(!todo.getCompleted());
+
         return TodoResponseDto.fromEntity(todo);
     }
-    // Delete a todo
+
+    /**
+     * 🆕 수정: 할일 삭제 (본인 할일만)
+     */
     @Transactional
-    public void deleteTodo(Long id) {
-        if (!todoRepository.existsById(id)) {
-            throw new RuntimeException("할 일을 찾을 수 없습니다. Id: " + id);
+    public void deleteTodo(Long userId, Long todoId) {
+        log.info("사용자 {}의 할일 {} 삭제", userId, todoId);
+
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new IllegalArgumentException("할일을 찾을 수 없습니다"));
+
+        // 🆕 본인 할일인지 확인
+        if (!todo.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("다른 사용자의 할일은 삭제할 수 없습니다");
         }
-        todoRepository.deleteById(id);
+
+        todoRepository.delete(todo);
     }
-    // Search for todo based on keyword
-    public List<TodoResponseDto> searchTodos(String keyword) {
-        return todoRepository.searchByKeyword(keyword).stream()
+
+    @Transactional(readOnly = true)
+    public List<TodoResponseDto> searchTodos(Long userId, String keyword) {
+        log.info("사용자 {}의 할일 키워드 검색: {}", userId, keyword);
+        List<Todo> searchResults = todoRepository.searchByKeyword(keyword);
+        return searchResults.stream()
+                .filter(todo -> todo.getUser().getId().equals(userId))
                 .map(TodoResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
