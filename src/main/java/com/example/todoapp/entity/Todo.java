@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 // Todo Entity
 // JPA will manage table creation and mapping based on this entity
-//
+// ---------------------------------------------------------------
 @Entity
 @Table(name = "todos")
 @Getter
@@ -23,11 +23,10 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;    // unique number to do
 
-    // Column properties
+    // -------Column properties--------
 
     // Todo Title
     // Column Type: VARCHAR(255)
-    // Not NULL
     @Column(nullable = false, length = 255)
     private String title;
 
@@ -42,22 +41,19 @@ public class Todo {
     @Builder.Default
     private Boolean completed = false;  // 기본값 설정
 
-
     // Creation time
     // Column Type: TIMESTAMP
-    // Unupdatable
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     // Update time
     // Column Type: TIMESTAMP
-    // Updatable
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY) // ManyToMany를 ManyToOne으로 변경
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 }
